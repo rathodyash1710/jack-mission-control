@@ -39,7 +39,7 @@ ssh -i your-key.pem ubuntu@<YOUR-EC2-PUBLIC-IP>
 
 ```bash
 # Clone the repo
-git clone https://github.com/Yash-AIML/jack-mission-control.git
+git clone https://github.com/rathodyash1710/jack-mission-control.git
 cd jack-mission-control
 
 # Run setup (replace YOUR_API_KEY)
