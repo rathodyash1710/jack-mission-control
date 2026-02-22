@@ -3,43 +3,68 @@ export default function StatusPanel({ status }: { status: any }) {
     return (
       <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-blue-500/30">
         <h2 className="text-xl font-bold mb-4">🔄 Agent Status</h2>
-        <p className="text-gray-400">Loading...</p>
+        <div className="flex items-center gap-2 text-gray-400">
+          <div className="h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          Connecting to gateway...
+        </div>
       </div>
     );
   }
 
+  const isOnline = status.status === 'online' || status.gatewayStatus === 'connected';
+  const statusLabel = status.gatewayStatus || status.status || 'unknown';
+
+  const statusColors: any = {
+    online: 'text-green-400',
+    connected: 'text-green-400',
+    connecting: 'text-yellow-400',
+    disconnected: 'text-red-400',
+    reconnecting: 'text-yellow-400',
+    auth_failed: 'text-red-400',
+    timeout: 'text-red-400',
+    shutting_down: 'text-orange-400',
+  };
+
   return (
     <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-blue-500/30">
-      <h2 className="text-xl font-bold mb-4">🔄 Agent Status</h2>
-      
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold">🔄 Agent Status</h2>
+        <div className="flex items-center gap-2">
+          <div className={`h-2.5 w-2.5 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+          <span className={`text-sm font-medium ${statusColors[statusLabel] || 'text-gray-400'}`}>
+            {statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1)}
+          </span>
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard 
-          label="Agent" 
-          value={status.agent || 'Jack'} 
+        <StatCard
+          label="Agent"
+          value={status.agent || 'Unknown'}
           icon="🤖"
           color="blue"
         />
-        <StatCard 
-          label="Status" 
-          value={status.status || 'unknown'} 
-          icon={status.status === 'online' ? '✅' : '⚠️'}
-          color={status.status === 'online' ? 'green' : 'yellow'}
+        <StatCard
+          label="Status"
+          value={isOnline ? 'Online' : statusLabel}
+          icon={isOnline ? '✅' : '⚠️'}
+          color={isOnline ? 'green' : 'yellow'}
         />
-        <StatCard 
-          label="Model" 
-          value={status.model?.split('/').pop() || 'N/A'} 
+        <StatCard
+          label="Model"
+          value={status.model?.split('/').pop() || 'N/A'}
           icon="🧠"
           color="purple"
         />
-        <StatCard 
-          label="Uptime" 
-          value={formatUptime(status.uptime || 0)} 
+        <StatCard
+          label="Uptime"
+          value={formatUptime(status.uptime || 0)}
           icon="⏱️"
           color="cyan"
         />
       </div>
 
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
           <h3 className="text-sm font-semibold text-gray-400 mb-2">Sessions</h3>
           <div className="flex justify-between items-center">
@@ -49,10 +74,22 @@ export default function StatusPanel({ status }: { status: any }) {
         </div>
 
         <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
-          <h3 className="text-sm font-semibold text-gray-400 mb-2">Memory</h3>
+          <h3 className="text-sm font-semibold text-gray-400 mb-2">Nodes</h3>
           <div className="flex justify-between items-center">
-            <span className="text-2xl font-bold">{status.memory?.usage || 'N/A'}</span>
-            <span className="text-sm text-gray-400">{status.memory?.files || 0} files</span>
+            <span className="text-2xl font-bold">{status.nodes || 0}</span>
+            <span className="text-sm text-gray-400">connected</span>
+          </div>
+        </div>
+
+        <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+          <h3 className="text-sm font-semibold text-gray-400 mb-2">Gateway</h3>
+          <div className="flex justify-between items-center">
+            <span className={`text-lg font-bold ${isOnline ? 'text-green-400' : 'text-red-400'}`}>
+              {isOnline ? '● Live' : '○ Offline'}
+            </span>
+            {status.stateVersion && (
+              <span className="text-xs text-gray-500">v{status.stateVersion}</span>
+            )}
           </div>
         </div>
       </div>

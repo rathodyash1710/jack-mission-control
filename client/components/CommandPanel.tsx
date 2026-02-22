@@ -9,7 +9,7 @@ export default function CommandPanel({ onCommand }: { onCommand: (cmd: any) => v
     { label: 'Get Status', action: 'status', icon: '📊' },
     { label: 'List Sessions', action: 'sessions', icon: '💬' },
     { label: 'View Memory', action: 'memory', icon: '🧠' },
-    { label: 'Clear Logs', action: 'clearLogs', icon: '🗑️' },
+    { label: 'Reconnect', action: 'reconnect', icon: '🔄' },
   ];
 
   const handleQuickCommand = (action: string) => {

@@ -15,7 +15,10 @@ export default function MissionControl() {
 
   useEffect(() => {
     // Connect to WebSocket server
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001';
+    // In production (behind Nginx), connect to /ws path
+    // In development, connect directly to backend port
+    const wsBase = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001';
+    const wsUrl = wsBase.includes('localhost:3001') ? wsBase : `${wsBase}/ws`;
     const socket = new WebSocket(wsUrl);
 
     socket.onopen = () => {
@@ -27,7 +30,7 @@ export default function MissionControl() {
 
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      
+
       switch (data.type) {
         case 'status':
         case 'statusUpdate':

@@ -1,0 +1,94 @@
+# Mission Control — Nginx Reverse Proxy Configuration
+# ===================================================
+# This is a template file. The setup.sh script generates the actual
+# config at /etc/nginx/sites-available/mission-control
+#
+# To use manually:
+#   1. Replace {{SERVER_NAME}} with your domain or "_" for any
+#   2. Replace {{FRONTEND_PORT}} with 3000
+#   3. Replace {{BACKEND_PORT}} with 3001
+#   4. Copy to /etc/nginx/sites-available/mission-control
+#   5. ln -s /etc/nginx/sites-available/mission-control /etc/nginx/sites-enabled/
+#   6. sudo nginx -t && sudo systemctl restart nginx
+
+upstream mc_frontend {
+    server 127.0.0.1:{{FRONTEND_PORT}};
+}
+
+upstream mc_backend {
+    server 127.0.0.1:{{BACKEND_PORT}};
+}
+
+server {
+    listen 80;
+    server_name {{SERVER_NAME}};
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # Gzip compression
+    gzip on;
+    gzip_types text/plain text/css text/javascript application/javascript application/json;
+    gzip_min_length 1000;
+    gzip_vary on;
+
+    # Backend API routes
+    location /api/ {
+        proxy_pass http://mc_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 300s;
+        proxy_connect_timeout 75s;
+    }
+
+    # Health check
+    location /health {
+        proxy_pass http://mc_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # WebSocket connection for real-time dashboard updates
+    location /ws {
+        proxy_pass http://mc_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 86400s;
+        proxy_send_timeout 86400s;
+    }
+
+    # Frontend (Next.js) — catch-all
+    location / {
+        proxy_pass http://mc_frontend;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# SSL Configuration (added by certbot when using --domain)
+# server {
+#     listen 443 ssl;
+#     server_name {{SERVER_NAME}};
+#     ssl_certificate /etc/letsencrypt/live/{{SERVER_NAME}}/fullchain.pem;
+#     ssl_certificate_key /etc/letsencrypt/live/{{SERVER_NAME}}/privkey.pem;
+#     include /etc/letsencrypt/options-ssl-nginx.conf;
+#     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+#     # ... same location blocks as above ...
+# }
